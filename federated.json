@@ -1,0 +1,9 @@
+﻿{
+  "name": "github-actions",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:AaronC17/MyGymApp:ref:refs/heads/main",
+  "description": "Federated identity for GitHub Actions CI/CD",
+  "audiences": [
+    "api://AzureADTokenExchange"
+  ]
+}
