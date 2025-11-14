@@ -36,9 +36,58 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: null,
   },
+  height: {
+    type: Number,
+    default: null, // en cm
+  },
+  age: {
+    type: Number,
+    default: null,
+  },
   goal: {
     type: String,
     default: null,
+  },
+  bodyFat: {
+    type: Number,
+    default: null, // porcentaje
+  },
+  muscleMass: {
+    type: Number,
+    default: null, // en kg
+  },
+  bodyPhotos: [{
+    _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+    url: { type: String, required: true },
+    date: { type: Date, default: Date.now },
+    type: { type: String, enum: ['front', 'side', 'back'], default: 'front' },
+    notes: String,
+  }],
+  fitnessLevel: {
+    type: String,
+    enum: ['beginner', 'intermediate', 'advanced'],
+    default: 'beginner',
+  },
+  trainingExperience: {
+    years: {
+      type: Number,
+      default: 0,
+    },
+    months: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 11,
+    },
+  },
+  injuries: [{
+    type: String,
+    description: String,
+  }],
+  preferences: {
+    workoutDays: [Number], // 0-6 (domingo-sábado)
+    preferredTime: String, // morning, afternoon, evening
+    equipment: [String], // gym, home, both
   },
   currentPlan: {
     type: mongoose.Schema.Types.ObjectId,

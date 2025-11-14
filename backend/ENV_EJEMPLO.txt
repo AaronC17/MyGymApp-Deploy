@@ -1,0 +1,14 @@
+# ============================================================================
+# 🔐 Variables de Entorno Requeridas - Energym Backend
+# ============================================================================
+# Copia estas líneas a tu archivo backend/.env
+
+# 🔑 JWT Secret (REQUERIDO para autenticación)
+JWT_SECRET=energym-super-secret-key-2024-minimo-32-caracteres-segura
+
+# 🤖 OpenAI API Key (REQUERIDO para AI Hub)
+OPENAI_API_KEY=sk-xxxxxx-tu-api-key-aqui
+
+# 🗄️ Base de Datos (opcional, usa MongoDB local si no está configurado)
+# MONGODB_URI=mongodb://localhost:27017/energym-db
+

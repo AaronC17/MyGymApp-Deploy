@@ -20,16 +20,55 @@ router.get('/', authenticate, requireAdmin, async (req, res) => {
       ];
     }
 
+    // Check database connection
+    if (require('mongoose').connection.readyState !== 1) {
+      console.error('Database not connected');
+      return res.status(503).json({ error: 'Database not available. Please check your connection.' });
+    }
+
     const clients = await User.find(query)
       .select('-password')
       .limit(limit)
       .skip(skip)
       .sort({ createdAt: -1 });
 
+    // Get memberships for all clients (get the most recent one per client)
+    const clientIds = clients.map(c => c._id);
+    const allMemberships = await Membership.find({
+      userId: { $in: clientIds },
+    }).sort({ createdAt: -1 });
+
+    // Get the most recent membership for each client
+    const membershipsMap = new Map();
+    allMemberships.forEach(m => {
+      const userId = m.userId.toString();
+      if (!membershipsMap.has(userId)) {
+        membershipsMap.set(userId, m);
+      }
+    });
+    const memberships = Array.from(membershipsMap.values());
+
+    // Map memberships to clients
+    const clientsWithMemberships = clients.map(client => {
+      const clientData = client.toJSON();
+      const membership = memberships.find(m => m.userId.toString() === client._id.toString());
+      if (membership) {
+        clientData.membership = {
+          _id: membership._id,
+          status: membership.status,
+          startDate: membership.startDate,
+          endDate: membership.endDate,
+          planType: membership.planType,
+          price: membership.price,
+        };
+      }
+      return clientData;
+    });
+
     const total = await User.countDocuments(query);
 
     res.json({
-      clients,
+      clients: clientsWithMemberships,
       total,
       page: parseInt(page),
       pages: Math.ceil(total / limit),

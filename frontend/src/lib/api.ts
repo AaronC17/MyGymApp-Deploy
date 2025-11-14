@@ -16,6 +16,10 @@ api.interceptors.request.use((config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Don't set Content-Type for FormData, let axios handle it automatically
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
   }
   return config;
 });
@@ -26,9 +30,17 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        // Solo cerrar sesión si estamos en una ruta protegida
+        const protectedRoutes = ['/dashboard', '/admin', '/perfil', '/recibos'];
+        const currentPath = window.location.pathname;
+        const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
+        
+        if (isProtectedRoute) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
+        // Si es una ruta pública, solo rechazar el error sin cerrar sesión
       }
     }
     return Promise.reject(error);

@@ -22,13 +22,37 @@ router.get('/', authenticate, async (req, res) => {
       query.status = status;
     }
 
+    // Check database connection
+    if (require('mongoose').connection.readyState !== 1) {
+      console.error('Database not connected');
+      return res.status(503).json({ error: 'Database not available. Please check your connection.' });
+    }
+
     const memberships = await Membership.find(query)
       .populate('userId', 'name email')
       .sort({ createdAt: -1 });
 
-    res.json({ memberships });
+    // Filter out memberships with null userId (deleted users) or add default values
+    const validMemberships = memberships.map(membership => {
+      if (!membership.userId) {
+        return {
+          ...membership.toObject(),
+          userId: {
+            _id: null,
+            name: 'Usuario eliminado',
+            email: 'N/A'
+          }
+        };
+      }
+      return membership;
+    });
+
+    res.json({ memberships: validMemberships });
   } catch (error) {
     console.error('Get memberships error:', error);
+    if (error.name === 'MongoServerError' || error.name === 'MongoNetworkError') {
+      return res.status(503).json({ error: 'Database connection error. Please try again later.' });
+    }
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -45,7 +69,7 @@ router.get('/:id', authenticate, async (req, res) => {
     }
 
     // Users can only view their own memberships unless they're admin
-    if (req.user.role !== 'admin' && membership.userId._id.toString() !== req.user._id.toString()) {
+    if (req.user.role !== 'admin' && membership.userId && membership.userId._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -89,6 +113,33 @@ router.post('/', authenticate, requireAdmin, [
   }
 });
 
+// PUT /api/memberships/:id - Update membership (admin only)
+router.put('/:id', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, endDate, startDate, price, planType } = req.body;
+
+    const membership = await Membership.findById(id);
+    if (!membership) {
+      return res.status(404).json({ error: 'Membership not found' });
+    }
+
+    if (status) membership.status = status;
+    if (endDate) membership.endDate = new Date(endDate);
+    if (startDate) membership.startDate = new Date(startDate);
+    if (price !== undefined) membership.price = price;
+    if (planType) membership.planType = planType;
+
+    await membership.save();
+    await membership.populate('userId', 'name email');
+
+    res.json(membership);
+  } catch (error) {
+    console.error('Update membership error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // PUT /api/memberships/:id/renew - Renew membership
 router.put('/:id/renew', authenticate, [
   body('months').isInt({ min: 1 }),
@@ -126,6 +177,31 @@ router.put('/:id/renew', authenticate, [
   }
 });
 
+// DELETE /api/memberships/:id - Delete/suspend membership (admin only)
+router.delete('/:id', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { suspend } = req.query; // If suspend=true, just change status instead of deleting
+
+    const membership = await Membership.findById(id);
+    if (!membership) {
+      return res.status(404).json({ error: 'Membership not found' });
+    }
+
+    if (suspend === 'true') {
+      membership.status = 'suspended';
+      await membership.save();
+      res.json({ message: 'Membership suspended', membership });
+    } else {
+      await Membership.findByIdAndDelete(id);
+      res.json({ message: 'Membership deleted successfully' });
+    }
+  } catch (error) {
+    console.error('Delete membership error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // GET /api/memberships/expiring - Get expiring memberships (admin only)
 router.get('/expiring/all', authenticate, requireAdmin, async (req, res) => {
   try {
@@ -140,7 +216,23 @@ router.get('/expiring/all', authenticate, requireAdmin, async (req, res) => {
       .populate('userId', 'name email phone')
       .sort({ endDate: 1 });
 
-    res.json({ memberships, days });
+    // Filter out memberships with null userId (deleted users) or add default values
+    const validMemberships = memberships.map(membership => {
+      if (!membership.userId) {
+        return {
+          ...membership.toObject(),
+          userId: {
+            _id: null,
+            name: 'Usuario eliminado',
+            email: 'N/A',
+            phone: 'N/A'
+          }
+        };
+      }
+      return membership;
+    });
+
+    res.json({ memberships: validMemberships, days });
   } catch (error) {
     console.error('Get expiring memberships error:', error);
     res.status(500).json({ error: 'Server error' });
