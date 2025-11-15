@@ -39,7 +39,11 @@ jobs:
           rm -rf ../frontend-build/*
           cp -r .next/standalone/* ../frontend-build/
 
-          # Copiar static
+          # IMPORTANTE: Copiar la carpeta .next completa del build (no del standalone)
+          # Esta contiene el BUILD_ID y otros archivos necesarios
+          cp -r .next/standalone/.next ../frontend-build/ 2>/dev/null || true
+          
+          # Copiar static files desde el build original
           mkdir -p ../frontend-build/.next/static
           cp -r .next/static/* ../frontend-build/.next/static/
 
@@ -57,6 +61,14 @@ jobs:
             echo "ERROR: server.js no encontrado en standalone build"
             exit 1
           fi
+          
+          # Verificar estructura crítica
+          echo "=== Verificando estructura del build ==="
+          ls -la ../frontend-build/
+          echo "=== Contenido de .next ==="
+          ls -la ../frontend-build/.next/ || echo "ERROR: No existe .next directory"
+          echo "=== Buscando BUILD_ID ==="
+          find ../frontend-build/.next -name "BUILD_ID" -type f || echo "ERROR: BUILD_ID no encontrado"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
