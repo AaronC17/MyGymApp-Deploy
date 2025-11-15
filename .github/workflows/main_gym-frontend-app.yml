@@ -12,7 +12,7 @@ jobs:
       run:
         working-directory: frontend
     env:
-      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+      NEXT_PUBLIC_API_URL: https://gym-app-plan-cwc5hqcgf8gudxb8.eastus-01.azurewebsites.net/api
 
     steps:
       - name: Checkout repository
