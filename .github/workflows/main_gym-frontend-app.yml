@@ -35,8 +35,11 @@ jobs:
           # Crear carpeta final para Azure
           mkdir -p ../frontend-build
 
-          # Copiar standalone (incluye server.js)
+          # Copiar contenido del standalone build a la raíz del artefacto (incluye archivos ocultos como .next)
+          rm -rf ../frontend-build/*
+          shopt -s dotglob
           cp -r .next/standalone/* ../frontend-build/
+          shopt -u dotglob
 
           # Copiar static
           mkdir -p ../frontend-build/.next/static
