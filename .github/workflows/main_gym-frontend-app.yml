@@ -35,43 +35,49 @@ jobs:
           # Crear carpeta final para Azure
           mkdir -p ../frontend-build
 
-          # Copiar contenido del standalone build a la raíz del artefacto
+          # PASO 1: Copiar el contenido completo del build standalone
+          # Esto incluye server.js, .next, node_modules, package.json
           rm -rf ../frontend-build/*
           cp -r .next/standalone/* ../frontend-build/
 
-          # IMPORTANTE: Copiar la carpeta .next completa desde la raíz del build
-          # Esta contiene el BUILD_ID y otros archivos necesarios que Next.js requiere
-          mkdir -p ../frontend-build/.next
-          cp -r .next/BUILD_ID ../frontend-build/.next/ 2>/dev/null || echo "WARNING: BUILD_ID not found"
-          cp -r .next/build-manifest.json ../frontend-build/.next/ 2>/dev/null || echo "WARNING: build-manifest.json not found"
-          cp -r .next/routes-manifest.json ../frontend-build/.next/ 2>/dev/null || echo "WARNING: routes-manifest.json not found"
-          
-          # Copiar static files desde el build original
+          # PASO 2: El standalone YA incluye .next con BUILD_ID
+          # Solo necesitamos agregar la carpeta static que no está incluida
+          echo "=== Copiando archivos static ==="
           mkdir -p ../frontend-build/.next/static
-          cp -r .next/static/* ../frontend-build/.next/static/ 2>/dev/null || echo "WARNING: static files not found"
+          cp -r .next/static/* ../frontend-build/.next/static/
 
-          # Copiar public (solo si existe)
+          # PASO 3: Copiar carpeta public si existe
           if [ -d "public" ]; then
+            echo "=== Copiando carpeta public ==="
             cp -r public ../frontend-build/public
           fi
 
-          # Copiar archivos necesarios para Azure
-          cp package*.json ../frontend-build/
-          cp web.config ../frontend-build/
+          # PASO 4: Copiar web.config para Azure
+          cp web.config ../frontend-build/ || echo "WARNING: web.config not found"
           
-          # Verificar que server.js exista
+          # VERIFICACIONES
+          echo "=== Verificando estructura del build ==="
+          ls -la ../frontend-build/
+          
+          echo "=== Verificando server.js ==="
           if [ ! -f "../frontend-build/server.js" ]; then
-            echo "ERROR: server.js no encontrado en standalone build"
+            echo "ERROR: server.js no encontrado"
             exit 1
           fi
           
-          # Verificar estructura crítica
-          echo "=== Verificando estructura del build ==="
-          ls -la ../frontend-build/
           echo "=== Contenido de .next ==="
-          ls -la ../frontend-build/.next/ || echo "ERROR: No existe .next directory"
-          echo "=== Buscando BUILD_ID ==="
-          find ../frontend-build/.next -name "BUILD_ID" -type f || echo "ERROR: BUILD_ID no encontrado"
+          ls -la ../frontend-build/.next/
+          
+          echo "=== Verificando BUILD_ID ==="
+          if [ -f "../frontend-build/.next/BUILD_ID" ]; then
+            echo "✓ BUILD_ID encontrado: $(cat ../frontend-build/.next/BUILD_ID)"
+          else
+            echo "ERROR: BUILD_ID no encontrado"
+            exit 1
+          fi
+          
+          echo "=== Verificando static ==="
+          ls -la ../frontend-build/.next/static/ | head -10
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
