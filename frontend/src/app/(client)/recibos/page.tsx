@@ -64,7 +64,8 @@ export default function RecibosPage() {
   const handleDownload = async (paymentId: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/payments/receipt/${paymentId}`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+      const response = await fetch(`${API_URL}/payments/receipt/${paymentId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

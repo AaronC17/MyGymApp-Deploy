@@ -75,10 +75,12 @@ const buildAllowedOrigins = () => {
 
   const origins = new Set(userConfiguredOrigins);
 
-  // Always allow local dev URLs so onboarding stays painless
-  ['http://localhost:3000', 'http://localhost:3001'].forEach(localOrigin => {
-    origins.add(localOrigin);
-  });
+  // Only add localhost in development
+  if (process.env.NODE_ENV !== 'production') {
+    ['http://localhost:3000', 'http://localhost:3001'].forEach(localOrigin => {
+      origins.add(localOrigin);
+    });
+  }
 
   return {
     origins,

@@ -269,18 +269,21 @@ export default function AIHubPage() {
       const response = await api.get(`/ai/history?type=${type}`);
       if (response.data.conversations && response.data.conversations.length > 0) {
         const latest = response.data.conversations[0];
+        // Get API base URL without /api suffix
+        const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api').replace('/api', '');
+        
         let messages = (latest.messages || []).map((msg: any) => ({
           ...msg,
           images: msg.images ? msg.images.map((img: string) => {
             // Convert relative paths to full URLs
             if (img.startsWith('/uploads/')) {
-              return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${img}`;
+              return `${API_BASE}${img}`;
             }
             return img;
           }) : undefined,
           pdfUrl: msg.pdfUrl ? (
             msg.pdfUrl.startsWith('/uploads/')
-              ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${msg.pdfUrl}`
+              ? `${API_BASE}${msg.pdfUrl}`
               : msg.pdfUrl
           ) : undefined,
         }));
