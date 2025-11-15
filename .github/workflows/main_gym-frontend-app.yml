@@ -35,23 +35,38 @@ jobs:
           # Crear carpeta final para Azure
           mkdir -p ../frontend-build
 
-          # PASO 1: Copiar el contenido completo del build standalone
-          # Esto incluye server.js, .next/, node_modules, package.json
-          rm -rf ../frontend-build/*
-          cp -r .next/standalone/. ../frontend-build/
+          # PASO 1: Crear estructura base y copiar standalone
+          rm -rf ../frontend-build
+          mkdir -p ../frontend-build
+          
+          # Copiar TODO el contenido de standalone (incluyendo archivos ocultos)
+          echo "=== Copiando standalone completo ==="
+          shopt -s dotglob
+          cp -rp .next/standalone/* ../frontend-build/
+          shopt -u dotglob
 
-          # Verificar que .next y BUILD_ID estén copiados
-          echo "=== Verificando .next copiado desde standalone ==="
-          ls -la ../frontend-build/.next/
+          # Verificar que .next y BUILD_ID estén presentes
+          echo "=== Verificando estructura después de copiar standalone ==="
+          ls -la ../frontend-build/
+          echo "=== Contenido de .next ==="
+          ls -la ../frontend-build/.next/ || echo "ERROR: .next no existe"
+          
           if [ ! -f "../frontend-build/.next/BUILD_ID" ]; then
             echo "ERROR: BUILD_ID no se copió desde standalone"
+            echo "Contenido de .next/standalone/.next:"
+            ls -la .next/standalone/.next/
             exit 1
           fi
-          echo "✓ BUILD_ID presente después de copiar standalone"
+          echo "✓ BUILD_ID presente: $(cat ../frontend-build/.next/BUILD_ID)"
 
-          # PASO 2: Copiar archivos static al directorio .next que ya existe
+          # PASO 2: Agregar archivos static que standalone no incluye
           echo "=== Copiando archivos static ==="
-          cp -r .next/static ../frontend-build/.next/
+          if [ -d ".next/static" ]; then
+            cp -r .next/static ../frontend-build/.next/
+            echo "✓ Static files copiados"
+          else
+            echo "WARNING: .next/static no encontrado"
+          fi
 
           # PASO 3: Copiar carpeta public si existe
           if [ -d "public" ]; then
