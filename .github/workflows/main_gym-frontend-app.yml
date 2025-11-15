@@ -21,40 +21,45 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Next.js (standalone)
-        run: |
-          npm run build
+      - name: Build Next.js app (standalone)
+        run: npm run build
 
-          # Crear carpeta final para Azure
+      - name: Prepare artifact for Azure
+        run: |
+          echo "📦 Construyendo artifact para Azure..."
+
           mkdir -p ../frontend-build
 
-          # Copiar standalone (incluye server.js)
-          cp -r .next/standalone/* ../frontend-build/
+          echo "➡ Copiando carpeta standalone completa"
+          cp -r .next/standalone ../frontend-build/standalone
 
-          # Copiar static
-          mkdir -p ../frontend-build/.next/static
-          cp -r .next/static/* ../frontend-build/.next/static/
+          echo "➡ Copiando .next/static"
+          mkdir -p ../frontend-build/.next
+          cp -r .next/static ../frontend-build/.next/static
 
-          # Copiar public (solo si existe)
+          echo "➡ Copiando public (si existe)"
           if [ -d "public" ]; then
             cp -r public ../frontend-build/public
           fi
 
-          # Copiar package.json para que Azure detecte Node app
+          echo "➡ Copiando package.json"
           cp package*.json ../frontend-build/
+
+          echo "📦 Artifact final listo en frontend-build/"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
           path: frontend-build
+          if-no-files-found: error
 
   deploy:
     runs-on: ubuntu-latest
@@ -80,5 +85,5 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'gym-frontend-app'
+          app-name: "gym-frontend-app"
           package: dist
