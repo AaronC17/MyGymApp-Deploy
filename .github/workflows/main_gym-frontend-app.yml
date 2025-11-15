@@ -30,11 +30,20 @@ jobs:
       - name: Build Next.js app
         run: npm run build
 
+      - name: Prepare artifact for Azure
+        run: |
+          shopt -s dotglob
+          rm -rf frontend-output
+          mkdir -p frontend-output
+          cp -R frontend/* frontend-output/
+          rm -rf frontend-output/node_modules
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-app
-          path: frontend/.next       # 👈 esto compila Next
+          path: frontend-output
+          if-no-files-found: error
 
   deploy:
     runs-on: ubuntu-latest
@@ -62,4 +71,4 @@ jobs:
         with:
           app-name: 'gym-frontend-app'
           slot-name: 'Production'
-          package: .
+          package: ./frontend-output
