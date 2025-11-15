@@ -38,11 +38,17 @@ jobs:
           cp -R ./* ../frontend-output/
           rm -rf ../frontend-output/node_modules
 
+      - name: Archive artifact
+        run: |
+          cd ..
+          rm -f frontend-output.zip
+          zip -qr frontend-output.zip frontend-output
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-app
-          path: frontend-output
+          path: frontend-output.zip
           if-no-files-found: error
 
   deploy:
@@ -71,4 +77,4 @@ jobs:
         with:
           app-name: 'gym-frontend-app'
           slot-name: 'Production'
-          package: ./frontend-output
+          package: ./frontend-output.zip
