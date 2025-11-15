@@ -1,6 +1,9 @@
 'use client';
+
+// NEXT.JS BUILD FIX — NO PRERENDER
 export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -20,13 +23,23 @@ export default function SuscripcionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuthStore();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer'>('card');
-  
-  const planKey = searchParams.get('plan') || 'mensual';
+
+  // Lee el plan desde la URL, pero si Next falla, pone 'mensual'
+  let planKey = 'mensual';
+
+  try {
+    planKey = searchParams?.get('plan') || 'mensual';
+  } catch {
+    planKey = 'mensual';
+  }
+
   const plan = PLAN_MAPPING[planKey] || PLAN_MAPPING.mensual;
 
+  // Protección de login y admin
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/login?redirect=/suscripcion?plan=' + planKey);
@@ -54,9 +67,7 @@ export default function SuscripcionPage() {
       }
     } catch (err: any) {
       console.error('Subscribe error:', err);
-      console.error('Error response:', err.response?.data);
-      console.error('Error status:', err.response?.status);
-      
+
       if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else if (err.response?.data?.details && Array.isArray(err.response.data.details)) {
@@ -66,7 +77,7 @@ export default function SuscripcionPage() {
       } else if (err.message) {
         setError(err.message);
       } else {
-        setError('Error al procesar la suscripción. Por favor, intenta nuevamente.');
+        setError('Error al procesar la suscripción. Intenta nuevamente.');
       }
     } finally {
       setLoading(false);
@@ -86,6 +97,8 @@ export default function SuscripcionPage() {
 
   return (
     <div className="min-h-screen bg-white">
+
+      {/* HEADER */}
       <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center py-4">
@@ -97,8 +110,11 @@ export default function SuscripcionPage() {
         </div>
       </header>
 
+      {/* MAIN */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid md:grid-cols-2 gap-8">
+
+          {/* PLAN SUMMARY */}
           <div className="card">
             <h2 className="text-xl font-semibold mb-4">Resumen del Plan</h2>
             <div className="space-y-4">
@@ -106,10 +122,12 @@ export default function SuscripcionPage() {
                 <p className="text-sm text-gray-600">Plan seleccionado</p>
                 <p className="text-2xl font-bold text-primary-600">{plan.name}</p>
               </div>
+
               <div>
                 <p className="text-sm text-gray-600">Duración</p>
                 <p className="text-lg font-medium">{plan.duration}</p>
               </div>
+
               <div className="pt-4 border-t">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600">Precio</span>
@@ -117,16 +135,11 @@ export default function SuscripcionPage() {
                     ₡{plan.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
                   </span>
                 </div>
-                {plan.planType === 'quarterly' && (
-                  <p className="text-sm text-green-600">Ahorras 10%</p>
-                )}
-                {plan.planType === 'annual' && (
-                  <p className="text-sm text-green-600">Ahorras 20%</p>
-                )}
               </div>
             </div>
           </div>
 
+          {/* PAYMENT METHOD */}
           <div className="card">
             <h2 className="text-xl font-semibold mb-4">Método de Pago</h2>
             <p className="text-sm text-gray-600 mb-4">
@@ -134,6 +147,8 @@ export default function SuscripcionPage() {
             </p>
 
             <div className="space-y-3">
+
+              {/* CARD */}
               <button
                 onClick={() => setPaymentMethod('card')}
                 className={`w-full p-4 border-2 rounded-lg text-left transition ${
@@ -147,12 +162,11 @@ export default function SuscripcionPage() {
                     <CreditCard className="h-5 w-5 text-gray-600" />
                     <span className="font-medium">Tarjeta</span>
                   </div>
-                  {paymentMethod === 'card' && (
-                    <Check className="h-5 w-5 text-primary-600" />
-                  )}
+                  {paymentMethod === 'card' && <Check className="h-5 w-5 text-primary-600" />}
                 </div>
               </button>
 
+              {/* CASH */}
               <button
                 onClick={() => setPaymentMethod('cash')}
                 className={`w-full p-4 border-2 rounded-lg text-left transition ${
@@ -166,12 +180,11 @@ export default function SuscripcionPage() {
                     <CreditCard className="h-5 w-5 text-gray-600" />
                     <span className="font-medium">Efectivo</span>
                   </div>
-                  {paymentMethod === 'cash' && (
-                    <Check className="h-5 w-5 text-primary-600" />
-                  )}
+                  {paymentMethod === 'cash' && <Check className="h-5 w-5 text-primary-600" />}
                 </div>
               </button>
 
+              {/* TRANSFER */}
               <button
                 onClick={() => setPaymentMethod('transfer')}
                 className={`w-full p-4 border-2 rounded-lg text-left transition ${
@@ -185,19 +198,19 @@ export default function SuscripcionPage() {
                     <CreditCard className="h-5 w-5 text-gray-600" />
                     <span className="font-medium">Transferencia</span>
                   </div>
-                  {paymentMethod === 'transfer' && (
-                    <Check className="h-5 w-5 text-primary-600" />
-                  )}
+                  {paymentMethod === 'transfer' && <Check className="h-5 w-5 text-primary-600" />}
                 </div>
               </button>
             </div>
 
+            {/* ERROR MESSAGE */}
             {error && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
+            {/* ACTION BUTTONS */}
             <div className="mt-6 space-y-3">
               <button
                 onClick={handleSubscribe}
@@ -216,6 +229,7 @@ export default function SuscripcionPage() {
                   </>
                 )}
               </button>
+
               <Link href="/planes" className="btn btn-secondary w-full text-center">
                 Cancelar
               </Link>
@@ -223,11 +237,11 @@ export default function SuscripcionPage() {
           </div>
         </div>
 
+        {/* INFO BOX */}
         <div className="mt-8 card bg-blue-50 border-blue-200">
           <p className="text-sm text-blue-800">
-            <strong>Nota:</strong> Esta es una simulación de suscripción. 
-            En un entorno de producción, aquí se integraría un procesador de pagos real 
-            como Stripe, PayPal o un sistema de pagos local.
+            <strong>Nota:</strong> Esta es una simulación de suscripción.
+            En producción se integraría Stripe, PayPal o un método de pago local.
           </p>
         </div>
       </main>

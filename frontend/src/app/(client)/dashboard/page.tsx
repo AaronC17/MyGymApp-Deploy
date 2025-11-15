@@ -1,6 +1,9 @@
 'use client';
+
+// NEXT.JS BUILD FIX — NO PRERENDER
 export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -53,6 +56,7 @@ export default function ClientDashboard() {
         const response = await api.get('/memberships', {
           params: { userId: user._id, status: 'active' },
         });
+
         if (response.data.memberships && response.data.memberships.length > 0) {
           setMembership(response.data.memberships[0]);
         }
@@ -86,47 +90,35 @@ export default function ClientDashboard() {
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'suspended':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'expired':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'suspended': return 'bg-yellow-100 text-yellow-800';
+      case 'expired': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusText = (status: string): string => {
     switch (status) {
-      case 'active':
-        return 'Activa';
-      case 'suspended':
-        return 'Suspendida';
-      case 'expired':
-        return 'Expirada';
-      default:
-        return 'Desconocido';
+      case 'active': return 'Activa';
+      case 'suspended': return 'Suspendida';
+      case 'expired': return 'Expirada';
+      default: return 'Desconocido';
     }
   };
 
   const formatPlanType = (planType: string): string => {
     switch (planType) {
-      case 'monthly':
-        return 'Mensual';
-      case 'quarterly':
-        return 'Trimestral';
-      case 'annual':
-        return 'Anual';
-      case 'premium':
-        return 'Premium';
-      default:
-        return planType.charAt(0).toUpperCase() + planType.slice(1);
+      case 'monthly': return 'Mensual';
+      case 'quarterly': return 'Trimestral';
+      case 'annual': return 'Anual';
+      case 'premium': return 'Premium';
+      default: return planType.charAt(0).toUpperCase() + planType.slice(1);
     }
   };
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Header */}
       <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -135,6 +127,7 @@ export default function ClientDashboard() {
               <Link href="/perfil" className="text-gray-700 hover:text-primary-600">
                 <User className="h-5 w-5" />
               </Link>
+
               <button onClick={handleLogout} className="text-gray-700 hover:text-red-600">
                 <LogOut className="h-5 w-5" />
               </button>
@@ -143,7 +136,9 @@ export default function ClientDashboard() {
         </div>
       </header>
 
+      {/* Main */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         {showSuccess && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
             <CheckCircle className="h-6 w-6 text-green-600" />
@@ -155,6 +150,7 @@ export default function ClientDashboard() {
         )}
 
         <div className="grid md:grid-cols-2 gap-6">
+          {/* Membership */}
           <div className="card">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Mi Membresía</h2>
@@ -171,19 +167,20 @@ export default function ClientDashboard() {
                   <Calendar className="h-5 w-5 mr-2" />
                   <span>
                     Vence: {new Date(membership.endDate).toLocaleDateString('es-ES', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
+                      year: 'numeric', month: 'long', day: 'numeric',
                     })}
                   </span>
                 </div>
+
                 <div className="flex items-center text-gray-600">
                   <CreditCard className="h-5 w-5 mr-2" />
                   <span>Plan: {formatPlanType(membership.planType)}</span>
                 </div>
+
                 <div className="pt-4 border-t">
                   <p className="text-2xl font-bold text-primary-600">
                     ₡{membership.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+
                     <span className="text-sm text-gray-600 font-normal">/mes</span>
                   </p>
                 </div>
@@ -191,16 +188,16 @@ export default function ClientDashboard() {
             ) : (
               <div className="text-center py-8">
                 <p className="text-gray-600 mb-4">No tienes una membresía activa</p>
-                <Link href="/planes" className="btn btn-primary">
-                  Ver Planes
-                </Link>
+                <Link href="/planes" className="btn btn-primary">Ver Planes</Link>
               </div>
             )}
           </div>
 
+          {/* Quick actions */}
           <div className="card">
             <h2 className="text-xl font-semibold mb-4">Accesos Rápidos</h2>
             <div className="space-y-3">
+
               <Link href="/planes" className="block p-4 bg-secondary-100 rounded-lg hover:bg-secondary-200 transition border border-gray-200">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Ver Planes</span>
@@ -231,11 +228,13 @@ export default function ClientDashboard() {
                   <p className="text-xs text-primary-600 mt-1">Asistente Inteligente Premium</p>
                 </Link>
               )}
+
             </div>
           </div>
         </div>
       </main>
 
+      {/* Footer */}
       <footer className="bg-gray-50 border-t border-gray-200 mt-20 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
@@ -243,9 +242,7 @@ export default function ClientDashboard() {
               <Dumbbell className="h-5 w-5 text-primary-600" />
               <span className="text-lg font-bold text-gray-900">Energym</span>
             </div>
-            <p className="text-gray-600 text-sm">
-              &copy; 2024 Energym. Todos los derechos reservados.
-            </p>
+            <p className="text-gray-600 text-sm">&copy; 2024 Energym. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>
