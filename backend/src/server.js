@@ -41,7 +41,7 @@ const userProfileRoutes = require('./routes/userProfile');
 const connectDB = require('./config/database');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 // Connect to database (don't await, let it connect in background)
 // But log if connection fails

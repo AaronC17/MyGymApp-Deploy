@@ -2,8 +2,7 @@ name: Deploy frontend to Azure Web App - gym-frontend-app
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -11,7 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend   # 👈 MUY IMPORTANTE
+        working-directory: frontend
+    env:
+      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
     steps:
       - name: Checkout repository
@@ -20,35 +21,34 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Next.js app
+      - name: Build Next.js app (standalone)
         run: npm run build
 
       - name: Prepare artifact for Azure
         run: |
-          shopt -s dotglob
-          rm -rf ../frontend-output
-          mkdir -p ../frontend-output
-          cp -R ./* ../frontend-output/
-          rm -rf ../frontend-output/node_modules
-
-      - name: Archive artifact
-        run: |
-          cd ..
-          rm -f frontend-output.zip
-          zip -qr frontend-output.zip frontend-output
+          mkdir -p ../frontend-build
+          # Copiar standalone server
+          cp -r .next/standalone/* ../frontend-build/
+          # Copiar static
+          mkdir -p ../frontend-build/.next/static
+          cp -r .next/static/* ../frontend-build/.next/static/
+          # Copiar public
+          cp -r public ../frontend-build/public
+          # Copiar package.json para que Azure detecte que es Node
+          cp package*.json ../frontend-build/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-app
-          path: frontend-output.zip
+          name: frontend-dist
+          path: frontend-build
           if-no-files-found: error
 
   deploy:
@@ -62,8 +62,8 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: frontend-app
-          path: .
+          name: frontend-dist
+          path: dist
 
       - name: Azure Login
         uses: azure/login@v2
@@ -76,5 +76,4 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'gym-frontend-app'
-          slot-name: 'Production'
-          package: ./frontend-output.zip
+          package: dist
