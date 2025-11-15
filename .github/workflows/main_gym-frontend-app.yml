@@ -34,13 +34,18 @@ jobs:
       - name: Prepare artifact for Azure
         run: |
           mkdir -p ../frontend-build
-          # Copiar standalone server
-          cp -r .next/standalone/* ../frontend-build/
+          # Copiar standalone server manteniendo carpeta
+          rm -rf ../frontend-build/standalone
+          cp -r .next/standalone ../frontend-build/standalone
           # Copiar static
-          mkdir -p ../frontend-build/.next/static
-          cp -r .next/static/* ../frontend-build/.next/static/
-          # Copiar public
-          cp -r public ../frontend-build/public
+          mkdir -p ../frontend-build/.next
+          rm -rf ../frontend-build/.next/static
+          cp -r .next/static ../frontend-build/.next/static
+          # Copiar public solo si existe
+          if [ -d public ]; then
+            rm -rf ../frontend-build/public
+            cp -r public ../frontend-build/public
+          fi
           # Copiar package.json para que Azure detecte que es Node
           cp package*.json ../frontend-build/
 
