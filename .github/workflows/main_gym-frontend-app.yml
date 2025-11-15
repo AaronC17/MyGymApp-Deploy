@@ -28,25 +28,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Next.js app (standalone)
-        run: npm run build
-
-      - name: Prepare artifact for Azure
+      - name: Build Next.js (standalone)
         run: |
+          npm run build
+
+          # Crear carpeta final para Azure
           mkdir -p ../frontend-build
-          # Copiar standalone server manteniendo carpeta
-          rm -rf ../frontend-build/standalone
-          cp -r .next/standalone ../frontend-build/standalone
+
+          # Copiar standalone (incluye server.js)
+          cp -r .next/standalone/* ../frontend-build/
+
           # Copiar static
-          mkdir -p ../frontend-build/.next
-          rm -rf ../frontend-build/.next/static
-          cp -r .next/static ../frontend-build/.next/static
-          # Copiar public solo si existe
-          if [ -d public ]; then
-            rm -rf ../frontend-build/public
+          mkdir -p ../frontend-build/.next/static
+          cp -r .next/static/* ../frontend-build/.next/static/
+
+          # Copiar public (solo si existe)
+          if [ -d "public" ]; then
             cp -r public ../frontend-build/public
           fi
-          # Copiar package.json para que Azure detecte que es Node
+
+          # Copiar package.json para que Azure detecte Node app
           cp package*.json ../frontend-build/
 
       - name: Upload artifact
@@ -54,7 +55,6 @@ jobs:
         with:
           name: frontend-dist
           path: frontend-build
-          if-no-files-found: error
 
   deploy:
     runs-on: ubuntu-latest
