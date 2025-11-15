@@ -33,10 +33,10 @@ jobs:
       - name: Prepare artifact for Azure
         run: |
           shopt -s dotglob
-          rm -rf frontend-output
-          mkdir -p frontend-output
-          cp -R frontend/* frontend-output/
-          rm -rf frontend-output/node_modules
+          rm -rf ../frontend-output
+          mkdir -p ../frontend-output
+          cp -R ./* ../frontend-output/
+          rm -rf ../frontend-output/node_modules
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
