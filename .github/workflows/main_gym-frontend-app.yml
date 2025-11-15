@@ -39,13 +39,16 @@ jobs:
           rm -rf ../frontend-build/*
           cp -r .next/standalone/* ../frontend-build/
 
-          # IMPORTANTE: Copiar la carpeta .next completa del build (no del standalone)
-          # Esta contiene el BUILD_ID y otros archivos necesarios
-          cp -r .next/standalone/.next ../frontend-build/ 2>/dev/null || true
+          # IMPORTANTE: Copiar la carpeta .next completa desde la raíz del build
+          # Esta contiene el BUILD_ID y otros archivos necesarios que Next.js requiere
+          mkdir -p ../frontend-build/.next
+          cp -r .next/BUILD_ID ../frontend-build/.next/ 2>/dev/null || echo "WARNING: BUILD_ID not found"
+          cp -r .next/build-manifest.json ../frontend-build/.next/ 2>/dev/null || echo "WARNING: build-manifest.json not found"
+          cp -r .next/routes-manifest.json ../frontend-build/.next/ 2>/dev/null || echo "WARNING: routes-manifest.json not found"
           
           # Copiar static files desde el build original
           mkdir -p ../frontend-build/.next/static
-          cp -r .next/static/* ../frontend-build/.next/static/
+          cp -r .next/static/* ../frontend-build/.next/static/ 2>/dev/null || echo "WARNING: static files not found"
 
           # Copiar public (solo si existe)
           if [ -d "public" ]; then
