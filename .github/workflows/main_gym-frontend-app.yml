@@ -36,15 +36,22 @@ jobs:
           mkdir -p ../frontend-build
 
           # PASO 1: Copiar el contenido completo del build standalone
-          # Esto incluye server.js, .next, node_modules, package.json
+          # Esto incluye server.js, .next/, node_modules, package.json
           rm -rf ../frontend-build/*
-          cp -r .next/standalone/* ../frontend-build/
+          cp -r .next/standalone/. ../frontend-build/
 
-          # PASO 2: El standalone YA incluye .next con BUILD_ID
-          # Solo necesitamos agregar la carpeta static que no está incluida
+          # Verificar que .next y BUILD_ID estén copiados
+          echo "=== Verificando .next copiado desde standalone ==="
+          ls -la ../frontend-build/.next/
+          if [ ! -f "../frontend-build/.next/BUILD_ID" ]; then
+            echo "ERROR: BUILD_ID no se copió desde standalone"
+            exit 1
+          fi
+          echo "✓ BUILD_ID presente después de copiar standalone"
+
+          # PASO 2: Copiar archivos static al directorio .next que ya existe
           echo "=== Copiando archivos static ==="
-          mkdir -p ../frontend-build/.next/static
-          cp -r .next/static/* ../frontend-build/.next/static/
+          cp -r .next/static ../frontend-build/.next/
 
           # PASO 3: Copiar carpeta public si existe
           if [ -d "public" ]; then
