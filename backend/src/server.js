@@ -46,9 +46,16 @@ const PORT = process.env.PORT || 3002;
 
 // Connect to database (don't await, let it connect in background)
 // But log if connection fails
-connectDB().catch(err => {
-  console.error('Failed to connect to database:', err);
-});
+console.log('🔌 Iniciando conexión a la base de datos...');
+connectDB()
+  .then(() => {
+    console.log('✅ Base de datos conectada exitosamente');
+  })
+  .catch(err => {
+    console.error('❌ Failed to connect to database:', err.message);
+    console.error('Stack:', err.stack);
+    // Don't exit - let the app continue to start
+  });
 
 // Rate limiting
 const limiter = rateLimit({
@@ -156,6 +163,46 @@ console.log('📁 Serving static files from:', uploadsPath);
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Database health check
+app.get('/health/db', async (req, res) => {
+  const mongoose = require('mongoose');
+  try {
+    const dbState = mongoose.connection.readyState;
+    const states = {
+      0: 'disconnected',
+      1: 'connected',
+      2: 'connecting',
+      3: 'disconnecting',
+    };
+    
+    if (dbState === 1) {
+      // Try a simple query
+      const Product = require('./models/Product');
+      const count = await Product.countDocuments();
+      return res.json({
+        status: 'ok',
+        database: states[dbState],
+        productsCount: count,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    
+    res.json({
+      status: dbState === 1 ? 'ok' : 'warning',
+      database: states[dbState] || 'unknown',
+      message: dbState !== 1 ? 'Database not connected' : undefined,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      database: 'error',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // API Routes
