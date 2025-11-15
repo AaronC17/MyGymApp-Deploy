@@ -1,4 +1,6 @@
 'use client';
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -25,28 +27,22 @@ export default function ClientDashboard() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
-    // Early return if not authenticated
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
 
-    // Redirect admin to admin dashboard
     if (user?.role === 'admin') {
       router.push('/admin/dashboard');
       return;
     }
 
-    // Check for success message
     if (searchParams.get('subscription') === 'success') {
       setShowSuccess(true);
-      // Remove query param
       router.replace('/dashboard', { scroll: false });
-      // Hide success message after 5 seconds
       setTimeout(() => setShowSuccess(false), 5000);
     }
 
-    // Fetch membership if user exists
     const fetchMembership = async () => {
       if (!user?._id) {
         setLoading(false);
@@ -61,7 +57,6 @@ export default function ClientDashboard() {
           setMembership(response.data.memberships[0]);
         }
       } catch (error: any) {
-        // Si es 401, no hacer nada aquí, el interceptor lo manejará
         if (error.response?.status !== 401) {
           console.error('Error fetching membership:', error);
         }
@@ -132,7 +127,6 @@ export default function ClientDashboard() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -150,7 +144,6 @@ export default function ClientDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Success Message */}
         {showSuccess && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
             <CheckCircle className="h-6 w-6 text-green-600" />
@@ -162,7 +155,6 @@ export default function ClientDashboard() {
         )}
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Membership Card */}
           <div className="card">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Mi Membresía</h2>
@@ -206,7 +198,6 @@ export default function ClientDashboard() {
             )}
           </div>
 
-          {/* Quick Actions */}
           <div className="card">
             <h2 className="text-xl font-semibold mb-4">Accesos Rápidos</h2>
             <div className="space-y-3">
@@ -216,18 +207,21 @@ export default function ClientDashboard() {
                   <Calendar className="h-5 w-5 text-gray-400" />
                 </div>
               </Link>
+
               <Link href="/recibos" className="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Ver Recibos</span>
                   <CreditCard className="h-5 w-5 text-gray-400" />
                 </div>
               </Link>
+
               <Link href="/perfil" className="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Editar Perfil</span>
                   <User className="h-5 w-5 text-gray-400" />
                 </div>
               </Link>
+
               {membership && membership.planType === 'premium' && (
                 <Link href="/ai-hub" className="block p-4 bg-gradient-to-r from-primary-50 to-primary-100 rounded-lg hover:from-primary-100 hover:to-primary-200 transition border-2 border-primary-200">
                   <div className="flex items-center justify-between">
@@ -242,7 +236,6 @@ export default function ClientDashboard() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="bg-gray-50 border-t border-gray-200 mt-20 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
@@ -259,4 +252,3 @@ export default function ClientDashboard() {
     </div>
   );
 }
-

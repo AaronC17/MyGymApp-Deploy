@@ -1,4 +1,6 @@
 'use client';
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -48,7 +50,6 @@ export default function SuscripcionPage() {
       });
 
       if (response.data.success) {
-        // Redirect to dashboard with success message
         router.push('/dashboard?subscription=success');
       }
     } catch (err: any) {
@@ -56,7 +57,6 @@ export default function SuscripcionPage() {
       console.error('Error response:', err.response?.data);
       console.error('Error status:', err.response?.status);
       
-      // Mejor manejo de errores
       if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else if (err.response?.data?.details && Array.isArray(err.response.data.details)) {
@@ -99,7 +99,6 @@ export default function SuscripcionPage() {
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Plan Summary */}
           <div className="card">
             <h2 className="text-xl font-semibold mb-4">Resumen del Plan</h2>
             <div className="space-y-4">
@@ -128,7 +127,6 @@ export default function SuscripcionPage() {
             </div>
           </div>
 
-          {/* Payment Method */}
           <div className="card">
             <h2 className="text-xl font-semibold mb-4">Método de Pago</h2>
             <p className="text-sm text-gray-600 mb-4">
@@ -225,7 +223,6 @@ export default function SuscripcionPage() {
           </div>
         </div>
 
-        {/* Info Box */}
         <div className="mt-8 card bg-blue-50 border-blue-200">
           <p className="text-sm text-blue-800">
             <strong>Nota:</strong> Esta es una simulación de suscripción. 
@@ -237,4 +234,3 @@ export default function SuscripcionPage() {
     </div>
   );
 }
-
