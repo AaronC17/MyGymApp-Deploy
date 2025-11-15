@@ -31,35 +31,29 @@ jobs:
 
       - name: Prepare Artifact for Azure
         run: |
-          mkdir -p ../frontend-output
+          mkdir -p frontend-output
 
-          # 1) Copiar todo el contenido de standalone al root final
-          cp -r .next/standalone/* ../frontend-output/
+          # 1) Copiar standalone generado por Next.js
+          cp -r .next/standalone/* frontend-output/
 
-          # 2) Copiar .next COMPLETA porque Azure la necesita
-          mkdir -p ../frontend-output/.next
-          cp -r .next/* ../frontend-output/.next/
+          # 2) Copiar la carpeta .next completa (Azure la necesita)
+          mkdir -p frontend-output/.next
+          cp -r .next/* frontend-output/.next/
 
           # 3) Copiar public
           if [ -d "public" ]; then
-            cp -r public ../frontend-output/public
+            cp -r public frontend-output/public
           fi
 
-          # 4) Copiar package.json + lock
-          cp package.json ../frontend-output/
-          cp package-lock.json ../frontend-output/
-
-          # 5) Incluir node_modules SI el standalone lo requiere
-          # (solo si usas dependencias que no quedaron en la carpeta standalone)
-          if [ -d "node_modules" ]; then
-            cp -r node_modules ../frontend-output/node_modules
-          fi
+          # 4) Copiar package.json y lock
+          cp package.json frontend-output/
+          cp package-lock.json frontend-output/
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: ../frontend-output
+          path: frontend-output
           if-no-files-found: error
 
   deploy:
