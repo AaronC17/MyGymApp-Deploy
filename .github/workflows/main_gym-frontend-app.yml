@@ -11,6 +11,8 @@ jobs:
     defaults:
       run:
         working-directory: frontend
+    env:
+      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
     steps:
       - name: Checkout repository
@@ -19,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -27,34 +29,32 @@ jobs:
         run: npm ci
 
       - name: Build Next.js (standalone)
-        run: npm run build
-
-      - name: Prepare Artifact for Azure
         run: |
-          mkdir -p frontend-output
+          npm run build
 
-          # 1) Copiar standalone generado por Next.js
-          cp -r .next/standalone/* frontend-output/
+          # Crear carpeta final para Azure
+          mkdir -p ../frontend-build
 
-          # 2) Copiar la carpeta .next completa (Azure la necesita)
-          mkdir -p frontend-output/.next
-          cp -r .next/* frontend-output/.next/
+          # Copiar standalone (incluye server.js)
+          cp -r .next/standalone/* ../frontend-build/
 
-          # 3) Copiar public
+          # Copiar static
+          mkdir -p ../frontend-build/.next/static
+          cp -r .next/static/* ../frontend-build/.next/static/
+
+          # Copiar public (solo si existe)
           if [ -d "public" ]; then
-            cp -r public frontend-output/public
+            cp -r public ../frontend-build/public
           fi
 
-          # 4) Copiar package.json y lock
-          cp package.json frontend-output/
-          cp package-lock.json frontend-output/
+          # Copiar package.json para que Azure detecte Node app
+          cp package*.json ../frontend-build/
 
-      - name: Upload Artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: frontend-output
-          if-no-files-found: error
+          path: frontend-build
 
   deploy:
     runs-on: ubuntu-latest
@@ -80,5 +80,5 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "gym-frontend-app"
+          app-name: 'gym-frontend-app'
           package: dist
