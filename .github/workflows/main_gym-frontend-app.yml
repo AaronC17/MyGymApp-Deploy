@@ -74,7 +74,13 @@ jobs:
             cp -r public ../frontend-build/public
           fi
 
-          # PASO 4: Copiar web.config para Azure
+          # PASO 4: Copiar package.json desde deploy/ para standalone
+          if [ -f "deploy/package.json" ]; then
+            echo "=== Copiando package.json para standalone ==="
+            cp deploy/package.json ../frontend-build/
+          fi
+
+          # PASO 5: Copiar web.config para Azure
           cp web.config ../frontend-build/ || echo "WARNING: web.config not found"
           
           # VERIFICACIONES
