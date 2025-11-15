@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 
 // Load environment variables
 dotenv.config();
@@ -57,11 +58,56 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// Middleware
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || process.env.FRONTEND_URL || '*',
-  credentials: true
-}));
+// Build dynamic cors configuration that plays nice with Azure frontends
+const buildAllowedOrigins = () => {
+  const csvOrigins = [
+    process.env.CORS_ORIGINS,
+    process.env.CORS_ORIGIN,
+    process.env.FRONTEND_URL,
+  ]
+    .filter(Boolean)
+    .join(',');
+
+  const userConfiguredOrigins = csvOrigins
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+  const origins = new Set(userConfiguredOrigins);
+
+  // Always allow local dev URLs so onboarding stays painless
+  ['http://localhost:3000', 'http://localhost:3001'].forEach(localOrigin => {
+    origins.add(localOrigin);
+  });
+
+  return {
+    origins,
+    hasUserConfiguredOrigins: userConfiguredOrigins.length > 0,
+  };
+};
+
+const { origins: allowedOrigins, hasUserConfiguredOrigins } = buildAllowedOrigins();
+const allowAllOrigins = !hasUserConfiguredOrigins;
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowAllOrigins || allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+
+    console.warn(`🚫 CORS bloqueó la petición desde: ${origin}`);
+    return callback(new Error('Origen no permitido por CORS'));
+  },
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -69,7 +115,6 @@ app.use(express.urlencoded({ extended: true }));
 // __dirname is backend/src, files are saved to backend/uploads/products
 // So we need to serve from backend/uploads (one level up)
 const uploadsPath = path.join(__dirname, '../uploads');
-const fs = require('fs');
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
   console.log('📁 Created uploads directory:', uploadsPath);

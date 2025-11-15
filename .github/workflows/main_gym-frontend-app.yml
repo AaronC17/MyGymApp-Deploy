@@ -35,11 +35,9 @@ jobs:
           # Crear carpeta final para Azure
           mkdir -p ../frontend-build
 
-          # Copiar contenido del standalone build a la raíz del artefacto (incluye archivos ocultos como .next)
+          # Copiar contenido del standalone build a la raíz del artefacto
           rm -rf ../frontend-build/*
-          shopt -s dotglob
           cp -r .next/standalone/* ../frontend-build/
-          shopt -u dotglob
 
           # Copiar static
           mkdir -p ../frontend-build/.next/static
@@ -50,8 +48,15 @@ jobs:
             cp -r public ../frontend-build/public
           fi
 
-          # Copiar package.json para que Azure detecte Node app
+          # Copiar archivos necesarios para Azure
           cp package*.json ../frontend-build/
+          cp web.config ../frontend-build/
+          
+          # Verificar que server.js exista
+          if [ ! -f "../frontend-build/server.js" ]; then
+            echo "ERROR: server.js no encontrado en standalone build"
+            exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

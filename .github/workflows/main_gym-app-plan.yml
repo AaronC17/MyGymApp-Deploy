@@ -44,6 +44,17 @@ jobs:
         run: |
           mkdir output
           cp -R backend/* output/
+          
+          # Verificar que los archivos críticos existan
+          if [ ! -f "output/src/server.js" ]; then
+            echo "ERROR: src/server.js no encontrado"
+            exit 1
+          fi
+          
+          if [ ! -f "output/web.config" ]; then
+            echo "ERROR: web.config no encontrado"
+            exit 1
+          fi
 
       - name: Upload backend artifact
         uses: actions/upload-artifact@v4
