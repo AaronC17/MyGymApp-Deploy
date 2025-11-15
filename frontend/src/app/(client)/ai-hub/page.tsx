@@ -504,11 +504,12 @@ export default function AIHubPage() {
         tempImageUrls.forEach(url => URL.revokeObjectURL(url));
         
         // Convert relative paths to full URLs
+        const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api').replace('/api', '');
         updatedUserMessage = {
           ...userMessage,
           images: response.data.imageUrls.map((img: string) => {
             if (img.startsWith('/uploads/')) {
-              return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${img}`;
+              return `${API_BASE}${img}`;
             }
             return img;
           }),
@@ -641,8 +642,9 @@ export default function AIHubPage() {
         const lastUserMsg = updatedMsgs[updatedMsgs.length - 1];
         if (lastUserMsg && lastUserMsg.role === 'user') {
           // Convert relative path to full URL
+          const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api').replace('/api', '');
           const fullPdfUrl = response.data.pdfUrl.startsWith('/uploads/')
-            ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${response.data.pdfUrl}`
+            ? `${API_BASE}${response.data.pdfUrl}`
             : response.data.pdfUrl;
           lastUserMsg.pdfUrl = fullPdfUrl;
           setMealMessages([...updatedMsgs]);
@@ -804,8 +806,9 @@ export default function AIHubPage() {
         const lastUserMsg = updatedMsgs[updatedMsgs.length - 1];
         if (lastUserMsg && lastUserMsg.role === 'user') {
           // Convert relative path to full URL
+          const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api').replace('/api', '');
           const fullPdfUrl = response.data.pdfUrl.startsWith('/uploads/')
-            ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${response.data.pdfUrl}`
+            ? `${API_BASE}${response.data.pdfUrl}`
             : response.data.pdfUrl;
           lastUserMsg.pdfUrl = fullPdfUrl;
           setWorkoutMessages([...updatedMsgs]);
@@ -2365,9 +2368,8 @@ export default function AIHubPage() {
                             if (!imageUrl.startsWith('http')) {
                               // If it's a relative path, prepend the base URL (without /api)
                               // Images are served directly from the backend, not through /api
-                              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-                              const baseUrl = apiUrl.replace('/api', ''); // Remove /api from the URL
-                              imageUrl = `${baseUrl}${photo.url.startsWith('/') ? photo.url : `/${photo.url}`}`;
+                              const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api').replace('/api', '');
+                              imageUrl = `${API_BASE}${photo.url.startsWith('/') ? photo.url : `/${photo.url}`}`;
                             }
                             
                             const isSelected = selectedPhotosForAnalysis.includes(photo._id);
@@ -2393,10 +2395,11 @@ export default function AIHubPage() {
                                     alt={`Foto ${photo.type}`}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
+                                      const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api').replace('/api', '');
                                       console.error('Error loading image:', {
                                         imageUrl,
                                         photoUrl: photo.url,
-                                        baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+                                        baseUrl: API_BASE,
                                         photo
                                       });
                                       // Hide the broken image and show a placeholder div instead
