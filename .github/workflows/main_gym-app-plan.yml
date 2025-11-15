@@ -43,7 +43,8 @@ jobs:
       - name: Prepare artifact for Azure
         run: |
           mkdir output
-          cp -R backend/* output/
+          # Copiar TODO el contenido incluyendo archivos ocultos
+          cp -R backend/. output/
           
           # Verificar que los archivos críticos existan
           if [ ! -f "output/src/server.js" ]; then
@@ -55,6 +56,10 @@ jobs:
             echo "ERROR: web.config no encontrado"
             exit 1
           fi
+          
+          # Listar estructura para debugging
+          echo "=== Archivos en output/ ==="
+          ls -R output/ | head -50
 
       - name: Upload backend artifact
         uses: actions/upload-artifact@v4
