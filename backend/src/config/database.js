@@ -25,10 +25,9 @@ const connectDB = async () => {
       console.warn('   Configura COSMOS_DB_CONNECTION_STRING o MONGODB_URI en .env');
     }
 
-    const conn = await mongoose.connect(connectionString, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    // Mongoose 7.x no longer needs these deprecated options
+    // useNewUrlParser and useUnifiedTopology are now always true by default
+    const conn = await mongoose.connect(connectionString);
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     console.log(`📊 Database: ${conn.connection.name}`);
